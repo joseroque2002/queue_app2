@@ -1,5 +1,5 @@
 {
-  "buildCommand": "curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz | tar -xJ && export PATH=$PATH:$PWD/flutter/bin && flutter doctor && flutter pub get && flutter build web",
+  "buildCommand": "curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz | tar -xJ && export PATH=$PATH:$PWD/flutter/bin && flutter doctor && flutter pub get && flutter build web --base-href /",
   "outputDirectory": "build/web",
   "rewrites": [
     {
