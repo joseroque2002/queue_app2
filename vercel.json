@@ -1,10 +1,10 @@
 {
-  "buildCommand": "curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz | tar -xJ && export PATH=$PATH:$PWD/flutter/bin && flutter doctor && flutter pub get && flutter build web --base-href /",
+  "buildCommand": "curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz | tar -xJ && export PATH=$PATH:$PWD/flutter/bin && git config --global --add safe.directory /vercel/path0/flutter && flutter config --no-analytics && flutter pub get && flutter build web --web-renderer canvaskit",
   "outputDirectory": "build/web",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
