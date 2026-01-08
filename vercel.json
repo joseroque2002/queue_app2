@@ -1,19 +1,10 @@
 {
-  "builds": [
-    {
-      "src": "pubspec.yaml",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build/web"
-      }
-    }
-  ],
+  "buildCommand": "bash build.sh",
+  "outputDirectory": "build/web",
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "installCommand": "curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.16.0-stable.tar.xz | tar -xJ && export PATH=$PATH:$PWD/flutter/bin && flutter doctor && flutter pub get",
-  "buildCommand": "export PATH=$PATH:$PWD/flutter/bin && flutter build web --release"
+  ]
 }
