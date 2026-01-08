@@ -1,4 +1,10 @@
 {
-  "framework": "flutter",
-  "outputDirectory": "build/web"
+  "buildCommand": "curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz | tar -xJ && export PATH=$PATH:$PWD/flutter/bin && flutter doctor && flutter pub get && flutter build web",
+  "outputDirectory": "build/web",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
