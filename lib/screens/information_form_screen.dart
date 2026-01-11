@@ -47,6 +47,9 @@ class _InformationFormScreenState extends State<InformationFormScreen>
   String? _graduationYear; // Graduation year (for graduated students)
   bool _emailSent = false; // Track if email notification was sent
 
+  bool _showCourseSelection = false;
+  final ScrollController _courseScrollController = ScrollController();
+
   List<String> _departments = [];
   List<String> _purposes = [];
   List<String> _courses = [];
@@ -168,11 +171,6 @@ class _InformationFormScreenState extends State<InformationFormScreen>
       // Add +63 prefix to phone number
       final phoneNumber = '+63${_phoneController.text}';
 
-      // Validate course is selected
-      if (_selectedCourse == null || _selectedCourse!.isEmpty) {
-        throw Exception('Please select a course');
-      }
-
       final entry = await _supabaseService.addQueueEntry(
         name: _nameController.text,
         ssuId: _ssuIdController.text,
@@ -180,12 +178,12 @@ class _InformationFormScreenState extends State<InformationFormScreen>
         phoneNumber: phoneNumber,
         department: _selectedDepartment,
         purpose: _selectedPurpose,
-        course: _selectedCourse!,
+        course: _selectedCourse ?? '',
         isPwd: _isPwd,
         isSenior: _isSenior,
         isPregnant: _isPregnant,
         studentType: _studentType,
-        gender: _selectedGender,
+        gender: _selectedGender ?? '',
         age: _age != null && _age!.isNotEmpty
             ? int.tryParse(_age!)
             : null,
@@ -706,22 +704,13 @@ class _InformationFormScreenState extends State<InformationFormScreen>
 
   void _loadCoursesForDepartment(String departmentCode) {
     if (departmentCode.isEmpty) {
-      // If no department selected, show all courses
       _loadAllCourses();
       return;
     }
     
     setState(() {
       _courses = _courseService.getCourseCodesByDepartment(departmentCode);
-      // Clear selected course if it's not in the filtered list
       if (_selectedCourse != null && !_courses.contains(_selectedCourse)) {
-        _selectedCourse = null;
-      }
-      // Auto-select first course if list is not empty and no course is selected
-      if (_courses.isNotEmpty && _selectedCourse == null) {
-        _selectedCourse = _courses.first;
-      } else if (_courses.isEmpty) {
-        // If no courses for this department, clear selection
         _selectedCourse = null;
       }
     });
@@ -735,6 +724,7 @@ class _InformationFormScreenState extends State<InformationFormScreen>
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
+              controller: _courseScrollController,
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -1231,13 +1221,14 @@ class _InformationFormScreenState extends State<InformationFormScreen>
                                 );
                               }).toList(),
                               onChanged: (value) {
+                                if (value != null) {
                                   setState(() {
-                                    _selectedDepartment = value!;
-                                    // Clear selected course when department changes
+                                    _selectedDepartment = value;
                                     _selectedCourse = null;
-                                    // Load courses filtered by selected department
-                                    _loadCoursesForDepartment(_selectedDepartment);
+                                    _showCourseSelection = true;
                                   });
+                                  _loadCoursesForDepartment(value);
+                                }
                               },
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -1246,6 +1237,127 @@ class _InformationFormScreenState extends State<InformationFormScreen>
                                 return null;
                               },
                             ),
+
+                            const SizedBox(height: 14),
+
+                            // Course Selection Checklist (appears after department selection)
+                            if (_showCourseSelection) ...[
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.blue.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.checklist_rounded,
+                                          color: Colors.blue.shade700,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Select Your Course',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.blue.shade700,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(maxHeight: 200),
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          children: _courses.map((course) {
+                                            final courseName = _courseService
+                                                .getCourseByCode(course)
+                                                ?.name ?? course;
+                                            final isSelected = _selectedCourse == course;
+                                            
+                                            return Container(
+                                              margin: const EdgeInsets.only(bottom: 8),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _selectedCourse = course;
+                                                  });
+                                                },
+                                                borderRadius: BorderRadius.circular(8),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: isSelected 
+                                                        ? Colors.blue.shade100
+                                                        : Colors.white,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    border: Border.all(
+                                                      color: isSelected 
+                                                          ? Colors.blue.shade400
+                                                          : Colors.grey.shade300,
+                                                      width: isSelected ? 2 : 1,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        isSelected 
+                                                            ? Icons.check_circle
+                                                            : Icons.radio_button_unchecked,
+                                                        color: isSelected 
+                                                            ? Colors.blue.shade600
+                                                            : Colors.grey.shade400,
+                                                        size: 20,
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              course,
+                                                              style: TextStyle(
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 14,
+                                                                color: isSelected 
+                                                                    ? Colors.blue.shade700
+                                                                    : Colors.black87,
+                                                              ),
+                                                            ),
+                                                            if (courseName != course)
+                                                              Text(
+                                                                courseName,
+                                                                style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors.grey.shade600,
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                            ],
 
                                   const SizedBox(height: 14),
 
