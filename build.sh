@@ -5,7 +5,7 @@ echo "Starting Flutter web build..."
 
 # Download and extract Flutter
 echo "Downloading Flutter SDK..."
-curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz | tar -xJ
+curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.1-stable.tar.xz | tar -xJ
 
 # Add Flutter to PATH
 echo "Setting up Flutter PATH..."

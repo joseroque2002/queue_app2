@@ -31,10 +31,12 @@ class _InformationFormScreenState extends State<InformationFormScreen>
   final _ssuIdController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _customPurposeController = TextEditingController();
 
   String _selectedDepartment = '';
   String _selectedPurpose = '';
   String? _selectedCourse;
+  bool _isOthersPurpose = false;
   bool _isLoading = false;
   bool _showSuccess = false;
   QueueEntry? _assignedEntry;
@@ -130,6 +132,7 @@ class _InformationFormScreenState extends State<InformationFormScreen>
     _ssuIdController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _customPurposeController.dispose();
     super.dispose();
   }
 
@@ -171,13 +174,18 @@ class _InformationFormScreenState extends State<InformationFormScreen>
       // Add +63 prefix to phone number
       final phoneNumber = '+63${_phoneController.text}';
 
+      // Use custom purpose text if "Others" is selected, otherwise use selected purpose
+      final purposeText = _isOthersPurpose && _customPurposeController.text.isNotEmpty
+          ? _customPurposeController.text.trim()
+          : _selectedPurpose;
+
       final entry = await _supabaseService.addQueueEntry(
         name: _nameController.text,
         ssuId: _ssuIdController.text,
         email: _emailController.text,
         phoneNumber: phoneNumber,
         department: _selectedDepartment,
-        purpose: _selectedPurpose,
+        purpose: purposeText,
         course: _selectedCourse ?? '',
         isPwd: _isPwd,
         isSenior: _isSenior,
@@ -652,6 +660,7 @@ class _InformationFormScreenState extends State<InformationFormScreen>
     _ssuIdController.clear();
     _emailController.clear();
     _phoneController.clear();
+    _customPurposeController.clear();
     _selectedDepartment = _departments.isNotEmpty ? _departments.first : '';
     _selectedPurpose = _purposes.isNotEmpty ? _purposes.first : '';
     _selectedCourse = null;
@@ -664,6 +673,7 @@ class _InformationFormScreenState extends State<InformationFormScreen>
       _isPregnant = false;
       _studentType = 'Student';
       _emailSent = false;
+      _isOthersPurpose = false;
     });
   }
 
@@ -1756,21 +1766,37 @@ class _InformationFormScreenState extends State<InformationFormScreen>
                               ),
                                     menuMaxHeight: 200,
                                     isExpanded: true,
-                              items: _purposes.map((purpose) {
-                                return DropdownMenuItem(
-                                  value: purpose,
+                              items: [
+                                ..._purposes.map((purpose) {
+                                  return DropdownMenuItem(
+                                    value: purpose,
+                                    child: Text(
+                                      purpose,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                const DropdownMenuItem(
+                                  value: 'Others',
                                   child: Text(
-                                    purpose,
-                                    style: const TextStyle(
+                                    'Others',
+                                    style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.black,
                                     ),
                                   ),
-                                );
-                              }).toList(),
+                                ),
+                              ],
                               onChanged: (value) {
                                 setState(() {
                                   _selectedPurpose = value!;
+                                  _isOthersPurpose = value == 'Others';
+                                  if (!_isOthersPurpose) {
+                                    _customPurposeController.clear();
+                                  }
                                 });
                               },
                               validator: (value) {
@@ -1780,6 +1806,52 @@ class _InformationFormScreenState extends State<InformationFormScreen>
                                 return null;
                               },
                             ),
+
+                            // Custom purpose text field (shown when "Others" is selected)
+                            if (_isOthersPurpose) ...[
+                              const SizedBox(height: 14),
+                              TextFormField(
+                                controller: _customPurposeController,
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 20,
+                                  letterSpacing: 0.3,
+                                  color: Colors.black,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Others',
+                                  labelStyle: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 18,
+                                    letterSpacing: 0.3,
+                                    color: Colors.black,
+                                  ),
+                                  hintText: '(Specify your requested documents)',
+                                  hintStyle: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 16,
+                                    letterSpacing: 0.3,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.edit_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                maxLines: 2,
+                                validator: (value) {
+                                  if (_isOthersPurpose) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Please specify your requested documents';
+                                    }
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+
 
                                   const SizedBox(height: 16),
 
